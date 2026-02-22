@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "💀 DA HOOD V4 | GOD MODE",
-   LoadingTitle = "Đang kích hoạt hệ thống Bypass...",
+   Name = "💀 DA HOOD V5 | GOD MODE FIXED",
+   LoadingTitle = "Đang tối ưu hóa hệ thống...",
    ConfigurationSaving = {Enabled = false}
 })
 
@@ -20,10 +20,12 @@ local FlyEnabled = false
 local ESPEnabled = false
 local AutoKillEnabled = false
 
--- VÒNG TRÒN FOV (Cố định ở tâm màn hình)
+-- VÒNG TRÒN FOV (FIX LỖI MẢNG ĐỎ)
 local FOV_Circle = Drawing.new("Circle")
-FOV_Circle.Thickness = 1
-FOV_Circle.Color = Color3.fromRGB(255, 0, 0)
+FOV_Circle.Thickness = 1.5
+FOV_Circle.Color = Color3.fromRGB(0, 255, 255) -- Chuyển sang màu xanh Neon cho dễ nhìn
+FOV_Circle.Filled = false -- ĐÂY LÀ DÒNG FIX LỖI CỦA BẠN
+FOV_Circle.Transparency = 1
 FOV_Circle.Visible = false
 
 -- HÀM TẠO ESP (LINE + NAME)
@@ -47,7 +49,7 @@ local CombatTab = Window:CreateTab("🔫 Combat", 4483362458)
 local MoveTab = Window:CreateTab("🚀 Movement", 4483362458)
 local VisualTab = Window:CreateTab("👁️ Visuals", 4483362458)
 
--- TÍNH NĂNG CHIẾN ĐẤU
+-- COMBAT
 CombatTab:CreateToggle({
    Name = "Silent Aim (Bắn trúng tâm)",
    CurrentValue = false,
@@ -74,7 +76,7 @@ CombatTab:CreateSlider({
    Callback = function(v) FOVRadius = v; FOV_Circle.Radius = v end,
 })
 
--- TÍNH NĂNG DI CHUYỂN
+-- MOVEMENT
 MoveTab:CreateSlider({
    Name = "Speed Bypass",
    Range = {16, 250},
@@ -84,19 +86,19 @@ MoveTab:CreateSlider({
 })
 
 MoveTab:CreateToggle({
-   Name = "Fly Pro (Bay lên trời)",
+   Name = "Fly Pro (Space: Lên | Ctrl: Xuống)",
    CurrentValue = false,
    Callback = function(v) FlyEnabled = v end,
 })
 
--- TÍNH NĂNG HIỂN THỊ
+-- VISUALS
 VisualTab:CreateToggle({
    Name = "Bật ESP Line + Name",
    CurrentValue = false,
    Callback = function(v) ESPEnabled = v end,
 })
 
--- HÀM TÌM MỤC TIÊU GẦN TÂM NHẤT
+-- HÀM TÌM MỤC TIÊU
 local function GetClosestToCenter()
     local target = nil
     local dist = FOVRadius
@@ -117,23 +119,19 @@ local function GetClosestToCenter()
     return target
 end
 
--- VÒNG LẶP XỬ LÝ CHÍNH
+-- VÒNG LẶP XỬ LÝ
 RunService.RenderStepped:Connect(function()
     local CenterScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     FOV_Circle.Position = CenterScreen
     
     local Target = GetClosestToCenter()
 
-    -- Logic Auto Kill: Teleport & Khóa mục tiêu
     if AutoKillEnabled and Target and Target.Character then
         local targetHRP = Target.Character.HumanoidRootPart
-        -- Teleport đứng phía trên đối thủ 5 studs
         Client.Character.HumanoidRootPart.CFrame = targetHRP.CFrame * CFrame.new(0, 5, 2)
-        -- Nhìn thẳng vào đối thủ
         Client.Character.HumanoidRootPart.CFrame = CFrame.new(Client.Character.HumanoidRootPart.Position, targetHRP.Position)
     end
 
-    -- Logic ESP Line + Name
     for _, p in pairs(game.Players:GetPlayers()) do
         if p ~= Client and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
             if not ESP_Objects[p] then CreateESP(p) end
@@ -144,7 +142,7 @@ RunService.RenderStepped:Connect(function()
                 obj.Line.Visible, obj.Name.Visible = true, true
                 obj.Line.From = CenterScreen
                 obj.Line.To = Vector2.new(hrpPos.X, hrpPos.Y)
-                obj.Name.Position = Vector2.new(hrpPos.X, hrpPos.Y - 30)
+                obj.Name.Position = Vector2.new(hrpPos.X, hrpPos.Y - 35)
                 obj.Name.Text = p.DisplayName .. " (@" .. p.Name .. ")\nHP: " .. math.floor(p.Character.Humanoid.Health)
             else
                 obj.Line.Visible, obj.Name.Visible = false, false
@@ -155,24 +153,20 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Logic Fly & Speed
     if Client.Character and Client.Character:FindFirstChild("HumanoidRootPart") then
         if FlyEnabled then
-            -- Giữ nhân vật lơ lửng, Space để bay lên, Ctrl hạ xuống
-            local flyVel = Vector3.new(0, 0.5, 0)
+            local flyVel = Vector3.new(0, 0.9, 0) -- Giữ lơ lửng ổn định
             if UserInputService:IsKeyDown(Enum.KeyCode.Space) then flyVel = Vector3.new(0, 50, 0) end
             if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then flyVel = Vector3.new(0, -50, 0) end
             Client.Character.HumanoidRootPart.Velocity = flyVel
         end
-        
         if SpeedValue > 16 then
             local moveDir = Client.Character.Humanoid.MoveDirection
-            Client.Character.HumanoidRootPart.CFrame = Client.Character.HumanoidRootPart.CFrame + (moveDir * (SpeedValue/60))
+            Client.Character.HumanoidRootPart.CFrame = Client.Character.HumanoidRootPart.CFrame + (moveDir * (SpeedValue/65))
         end
     end
 end)
 
--- Silent Aim Hook (Dành riêng cho Da Hood)
 local old; old = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     if SilentAimEnabled and getnamecallmethod() == "FireServer" and self.Name == "MainEvent" and args[1] == "UpdateMousePos" then
@@ -182,4 +176,4 @@ local old; old = hookmetamethod(game, "__namecall", function(self, ...)
     return old(self, ...)
 end)
 
-Rayfield:Notify({Title = "DA HOOD V4", Content = "Auto Kill & Fly Pro đã sẵn sàng!", Duration = 5})
+Rayfield:Notify({Title = "FIXED V5", Content = "Đã fix lỗi mảng đỏ FOV và ESP!", Duration = 5})
