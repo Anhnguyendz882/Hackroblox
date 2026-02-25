@@ -1,142 +1,124 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "💀 DA HOOD V8 | STICKY KEO DINH CHUOT",
-   LoadingTitle = "Đang khởi động hệ thống Khóa Chết...",
+   Name = "💀 GOD MODE V9 | BRING ALL EDITION",
+   LoadingTitle = "Đang khởi tạo hệ thống gom mục tiêu...",
    ConfigurationSaving = {Enabled = false}
 })
 
 -- BIẾN HỆ THỐNG
 local Client = game.Players.LocalPlayer
-local Camera = game.Workspace.CurrentCamera
-local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
-
-local StickyLock = false
-local SilentAim = false
-local SpeedValue = 16
-local FlyEnabled = false
-local ESPEnabled = false
-local AutoKill = false
-local CurrentTarget = nil
-
--- HÀM TÌM MỤC TIÊU (ƯU TIÊN THẰNG GẦN CHUỘT NHẤT)
-local function GetBestTarget()
-    local target = nil
-    local maxDist = math.huge
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= Client and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
-            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-            if onScreen then
-                local mag = (Vector2.new(pos.X, pos.Y) - UIS:GetMouseLocation()).Magnitude
-                if mag < maxDist then
-                    target = v
-                    maxDist = mag
-                end
-            end
-        end
-    end
-    return target
-end
+local BringEnabled = false
+local AutoHitEnabled = false
+local BringDistance = 7 -- Khoảng cách gom trước mặt
 
 -- TABS
-local CombatTab = Window:CreateTab("🔫 Combat", 4483362458)
-local MoveTab = Window:CreateTab("🚀 Movement", 4483362458)
+local MainTab = Window:CreateTab("🗡️ Combat God", 4483362458)
 local VisualTab = Window:CreateTab("👁️ Visuals", 4483362458)
 
--- COMBAT
-CombatTab:CreateToggle({
-   Name = "Sticky Lock (Khóa cứng Camera)",
+-- TÍNH NĂNG COMBAT
+MainTab:CreateSection("Gom mục tiêu")
+
+MainTab:CreateToggle({
+   Name = "Gom Player (Bring All)",
    CurrentValue = false,
-   Callback = function(v) StickyLock = v end,
+   Callback = function(v) 
+      BringEnabled = v 
+      if v then
+         Rayfield:Notify({Title = "Kích hoạt", Content = "Đang hút tất cả Player về phía bạn!", Duration = 3})
+      end
+   end,
 })
 
-CombatTab:CreateToggle({
-   Name = "Silent Aim (Bắn là nát)",
-   CurrentValue = false,
-   Callback = function(v) SilentAim = v end,
-})
-
-CombatTab:CreateToggle({
-   Name = "Auto Kill (Bám đuôi + Kill)",
-   CurrentValue = false,
-   Callback = function(v) AutoKill = v end,
-})
-
--- MOVEMENT
-MoveTab:CreateSlider({
-   Name = "Speed Bypass",
-   Range = {16, 250},
+MainTab:CreateSlider({
+   Name = "Khoảng cách gom",
+   Range = {2, 20},
    Increment = 1,
-   CurrentValue = 16,
-   Callback = function(v) SpeedValue = v end,
+   CurrentValue = 7,
+   Callback = function(v) BringDistance = v end,
 })
 
-MoveTab:CreateToggle({
-   Name = "Fly Pro",
+MainTab:CreateSection("Tự động đánh")
+
+MainTab:CreateToggle({
+   Name = "Auto Hit (Đánh tập thể)",
    CurrentValue = false,
-   Callback = function(v) FlyEnabled = v end,
+   Callback = function(v) AutoHitEnabled = v end,
 })
 
--- VISUALS (ESP NAME + LINE)
+-- HỆ THỐNG ESP (Để biết tụi nó đang ở đâu trước khi gom)
+local ESPEnabled = false
 VisualTab:CreateToggle({
-   Name = "Bật ESP",
+   Name = "Bật ESP Player",
    CurrentValue = false,
    Callback = function(v) ESPEnabled = v end,
 })
 
 -- VÒNG LẶP XỬ LÝ CHÍNH
 RS.RenderStepped:Connect(function()
-    CurrentTarget = GetBestTarget()
-
-    -- 1. LOCK ON SIÊU DÍNH
-    if StickyLock and CurrentTarget and CurrentTarget.Character then
-        local targetPos = CurrentTarget.Character.HumanoidRootPart.Position
-        -- Ép Camera nhìn thẳng vào mục tiêu
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-    end
-
-    -- 2. AUTO KILL
-    if AutoKill and CurrentTarget and CurrentTarget.Character then
-        local hrp = CurrentTarget.Character.HumanoidRootPart
-        Client.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 7, 2)
-        Client.Character.HumanoidRootPart.CFrame = CFrame.new(Client.Character.HumanoidRootPart.Position, hrp.Position)
-    end
+    if not Client.Character or not Client.Character:FindFirstChild("HumanoidRootPart") then return end
     
-    -- 3. SPEED & FLY
-    if Client.Character and Client.Character:FindFirstChild("HumanoidRootPart") then
-        if SpeedValue > 16 then
-            Client.Character.HumanoidRootPart.CFrame = Client.Character.HumanoidRootPart.CFrame + (Client.Character.Humanoid.MoveDirection * (SpeedValue/65))
-        end
-        if FlyEnabled then
-            Client.Character.HumanoidRootPart.Velocity = Vector3.new(0, 1.5, 0)
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then Client.Character.HumanoidRootPart.Velocity = Vector3.new(0, 60, 0) end
-            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then Client.Character.HumanoidRootPart.Velocity = Vector3.new(0, -60, 0) end
-        end
-    end
-end)
+    local myHRP = Client.Character.HumanoidRootPart
+    local gatherPoint = myHRP.CFrame * CFrame.new(0, 0, -BringDistance)
 
--- 4. SILENT AIM (HOOK METATABLE - DÍNH NHƯ KEO)
-local mt = getrawmetatable(game)
-local oldNamecall = mt.__namecall
-setreadonly(mt, false)
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= Client and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = player.Character.HumanoidRootPart
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
 
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
+            -- 1. LOGIC GOM PLAYER (CHỈ HIỆN TRÊN MÁY BẠN)
+            if BringEnabled and hum and hum.Health > 0 then
+                targetHRP.CFrame = gatherPoint
+                targetHRP.Velocity = Vector3.new(0, 0, 0) -- Giữ cho tụi nó không bị văng
+            end
 
-    if SilentAim and method == "FireServer" and self.Name == "MainEvent" then
-        if args[1] == "UpdateMousePos" or args[1] == "MOUSE" then
-            if CurrentTarget and CurrentTarget.Character then
-                -- Prediction 0.145 dành cho Da Hood
-                args[2] = CurrentTarget.Character.HumanoidRootPart.Position + (CurrentTarget.Character.HumanoidRootPart.Velocity * 0.145)
-                return oldNamecall(self, unpack(args))
+            -- 2. LOGIC AUTO HIT (KHI GOM LẠI THÌ ĐÁNH)
+            if AutoHitEnabled and hum and hum.Health > 0 then
+                local weapon = Client.Character:FindFirstChildOfClass("Tool")
+                if weapon then
+                    local handle = weapon:FindFirstChild("Handle") or weapon:FindFirstChildOfClass("Part")
+                    if handle then
+                        firetouchinterest(targetHRP, handle, 0)
+                        firetouchinterest(targetHRP, handle, 1)
+                    end
+                end
+            end
+            
+            -- 3. LOGIC ESP (HIGHLIGHT)
+            if ESPEnabled and hum and hum.Health > 0 then
+                if not player.Character:FindFirstChild("GeminiHighlight") then
+                    local hl = Instance.new("Highlight", player.Character)
+                    hl.Name = "GeminiHighlight"
+                    hl.FillColor = Color3.fromRGB(255, 0, 0)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                end
+            else
+                if player.Character:FindFirstChild("GeminiHighlight") then
+                    player.Character.GeminiHighlight:Destroy()
+                end
             end
         end
     end
-    return oldNamecall(self, ...)
 end)
-setreadonly(mt, true)
 
--- THÔNG BÁO
-Rayfield:Notify({Title = "V8 READY", Content = "Dính như keo dính chuột! Lock-on đã kích hoạt.", Duration = 5})
+-- THÊM SPEED ĐỂ TIẾP CẬN ĐÁM ĐÔNG NHANH HƠN
+local MoveTab = Window:CreateTab("🚀 Movement", 4483362458)
+local SpeedVal = 16
+
+MoveTab:CreateSlider({
+   Name = "Speed Bypass",
+   Range = {16, 150},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(v) SpeedVal = v end,
+})
+
+RS.Heartbeat:Connect(function()
+    if Client.Character and Client.Character:FindFirstChild("HumanoidRootPart") and SpeedVal > 16 then
+        local moveDir = Client.Character.Humanoid.MoveDirection
+        Client.Character.HumanoidRootPart.CFrame = Client.Character.HumanoidRootPart.CFrame + (moveDir * (SpeedVal/80))
+    end
+end)
+
+Rayfield:Notify({Title = "V9 BRING ALL", Content = "Script đã sẵn sàng để dọn dẹp Server!", Duration = 5})
