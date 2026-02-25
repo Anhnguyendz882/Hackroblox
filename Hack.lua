@@ -1,8 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local VirtualInputManager = game:GetService("VirtualInputManager") -- Giả lập chuột trái thật sự
 
 local Window = Rayfield:CreateWindow({
-   Name = "💀 GOD MODE V11 | INSTANT KILL & REACH",
-   LoadingTitle = "Đang phá bỏ giới hạn sát thương...",
+   Name = "💀 GOD MODE V12 | FINAL DAMAGE FIX",
+   LoadingTitle = "Đang bẻ khóa hệ thống sát thương...",
    ConfigurationSaving = {Enabled = false}
 })
 
@@ -12,45 +13,45 @@ local RS = game:GetService("RunService")
 local BringEnabled = false
 local HitboxEnabled = false
 local AutoHitEnabled = false
-local HitboxSize = 25
-local BringDistance = 3 -- Khoảng cách gom cực sát để dính dame 100%
+local HitboxSize = 20
+local BringDistance = 4 -- Khoảng cách gom sát để dính dame 100%
 
 -- TABS
-local CombatTab = Window:CreateTab("🗡️ Ultimate Combat", 4483362458)
+local CombatTab = Window:CreateTab("🗡️ Hardcore Combat", 4483362458)
 local MoveTab = Window:CreateTab("🚀 Movement", 4483362458)
 
--- TÍNH NĂNG CHIẾN ĐẤU
-CombatTab:CreateSection("Hệ Thống Gom & Hút")
+-- TÍNH NĂNG COMBAT
+CombatTab:CreateSection("Hệ Thống Hút & Khóa")
 
 CombatTab:CreateToggle({
-   Name = "Hút Player (Magnet Bring)",
+   Name = "Hút Player (Bring)",
    CurrentValue = false,
    Callback = function(v) BringEnabled = v end,
 })
 
 CombatTab:CreateToggle({
-   Name = "Hitbox Extender (Khối va chạm)",
+   Name = "Phóng To Hitbox",
    CurrentValue = false,
    Callback = function(v) HitboxEnabled = v end,
 })
 
 CombatTab:CreateSlider({
-   Name = "Kích thước Hitbox",
+   Name = "Size Hitbox",
    Range = {2, 50},
    Increment = 1,
-   CurrentValue = 25,
+   CurrentValue = 20,
    Callback = function(v) HitboxSize = v end,
 })
 
 CombatTab:CreateSection("Sát Thương Tuyệt Đối")
 
 CombatTab:CreateToggle({
-   Name = "Auto Kill Aura (Hủy Diệt)",
+   Name = "KILL AURA (FIX DAME)",
    CurrentValue = false,
    Callback = function(v) AutoHitEnabled = v end,
 })
 
--- VÒNG LẶP XỬ LÝ CHÍNH (RENDER STEPPED)
+-- VÒNG LẶP XỬ LÝ CHÍNH
 RS.RenderStepped:Connect(function()
     if not Client.Character or not Client.Character:FindFirstChild("HumanoidRootPart") then return end
     
@@ -63,13 +64,13 @@ RS.RenderStepped:Connect(function()
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
 
             if hum and hum.Health > 0 then
-                -- 1. LOGIC GOM PLAYER (Sát nút để Bypass Anti-cheat Distance)
+                -- 1. GOM NGƯỜI SÁT NÚT
                 if BringEnabled then
                     targetHRP.CFrame = gatherPoint
                     targetHRP.Velocity = Vector3.new(0, 0, 0)
                 end
 
-                -- 2. LOGIC HITBOX (Phóng to để quẹt nhẹ là trúng)
+                -- 2. HITBOX CỰC ĐẠI
                 if HitboxEnabled then
                     targetHRP.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
                     targetHRP.Transparency = 0.8
@@ -80,21 +81,21 @@ RS.RenderStepped:Connect(function()
                     targetHRP.Transparency = 1
                 end
 
-                -- 3. LOGIC ATTACK BYPASS (FIX LỖI KHÔNG DÍNH DAME)
+                -- 3. SIÊU CẤP KILL AURA (FIX LỖI KHÔNG BẤM)
                 if AutoHitEnabled then
                     local weapon = Client.Character:FindFirstChildOfClass("Tool")
                     if weapon then
+                        -- GIẢ LẬP NHẤN CHUỘT THẬT (MouseButton1)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+
+                        -- ÉP VŨ KHÍ CHẠM VÀO ĐỊCH
                         local handle = weapon:FindFirstChild("Handle") or weapon:FindFirstChildOfClass("Part")
                         if handle then
-                            -- Gửi lệnh va chạm liên tục
+                            handle.CFrame = targetHRP.CFrame
                             firetouchinterest(targetHRP, handle, 0)
                             firetouchinterest(targetHRP, handle, 1)
-                            
-                            -- CỰC QUAN TRỌNG: Đưa Handle vũ khí sát vào mục tiêu để dính dame 100%
-                            handle.CFrame = targetHRP.CFrame
                         end
-                        -- Kích hoạt đòn đánh (Vung kiếm)
-                        weapon:Activate()
                     end
                 end
             end
@@ -102,7 +103,7 @@ RS.RenderStepped:Connect(function()
     end
 end)
 
--- HỆ THỐNG DI CHUYỂN (SPEED BYPASS)
+-- TÍNH NĂNG DI CHUYỂN
 local SpeedVal = 16
 MoveTab:CreateSlider({
    Name = "Speed Bypass",
@@ -119,4 +120,4 @@ RS.Heartbeat:Connect(function()
     end
 end)
 
-Rayfield:Notify({Title = "V11 READY", Content = "Đã fix lỗi Dame! Khoảng cách gom đã được tối ưu.", Duration = 5})
+Rayfield:Notify({Title = "V12 FINAL READY", Content = "Đã fix lỗi Dame và Tự động đánh! Chúc bạn quẩy vui vẻ.", Duration = 5})
